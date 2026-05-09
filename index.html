@@ -405,7 +405,8 @@ function mkDonut(id,labels,data,colors,centerVal,centerLbl){
 function mkBar(id,labels,datasets,opts={}){
   const ctx=document.getElementById(id);if(!ctx)return;
   if(_charts[id])_charts[id].destroy();
-  _charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:datasets.length>1,labels:{color:'#8888a0',font:{size:11}}}},scales:{x:{ticks:{color:'#8888a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#8888a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}}}},...opts}});
+  const barOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:datasets.length>1,labels:{color:'#8888a0',font:{size:11}}}},scales:{x:{ticks:{color:'#8888a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#8888a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}}}};
+  _charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:Object.assign(barOpts,opts||{})});
 }
 function mkLine(id,labels,datasets){
   const ctx=document.getElementById(id);if(!ctx)return;
