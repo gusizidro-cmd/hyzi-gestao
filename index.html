@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyzi Engenharia — Gestão de Projetos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #e8b84b;
+    --accent2: #c49830;
+    --green: #4caf82;
+    --red: #e05555;
+    --blue: #5b9bd5;
+    --orange: #e07c40;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; min-height: 100vh; }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 30% 50%, rgba(232,184,75,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(91,155,213,0.06) 0%, transparent 50%), var(--bg);
+  }
+  .login-box {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 20px;
+    padding: 48px; width: 100%; max-width: 420px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .login-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; margin-bottom: 6px; }
+  .login-sub { color: var(--text2); font-size: 13px; margin-bottom: 40px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field input, .field select {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); padding: 12px 14px; font-size: 15px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .btn-primary {
+    width: 100%; background: var(--accent); color: #000; border: none; border-radius: var(--radius-sm);
+    padding: 14px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 8px;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:active { transform: scale(0.98); }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
+
+  /* ── APP SHELL ── */
+  #app { display: none; min-height: 100vh; }
+  .topbar {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--accent); }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .user-badge { font-size: 13px; color: var(--text2); }
+  .btn-logout { background: none; border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .btn-logout:hover { border-color: var(--border2); color: var(--text); }
+
+  /* ── NAV TABS ── */
+  .nav-tabs { display: flex; gap: 4px; padding: 16px 24px 0; border-bottom: 1px solid var(--border); background: var(--bg2); overflow-x: auto; }
+  .nav-tab { padding: 10px 20px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; font-size: 14px; cursor: pointer; border: 1px solid transparent; border-bottom: none; color: var(--text2); transition: all 0.2s; white-space: nowrap; }
+  .nav-tab:hover { color: var(--text); background: var(--bg3); }
+  .nav-tab.active { color: var(--accent); background: var(--bg); border-color: var(--border); }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 24px; max-width: 1400px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .cards-row { display: grid; gap: 16px; margin-bottom: 24px; }
+  .cards-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .cards-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-bottom: 8px; }
+  .card-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; }
+  .card-value.green { color: var(--green); }
+  .card-value.amber { color: var(--accent); }
+  .card-value.blue { color: var(--blue); }
+  .card-value.red { color: var(--red); }
+  .card-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .section-actions { display: flex; gap: 8px; }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 500; white-space: nowrap; }
+  tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  /* ── BADGES ── */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-green { background: rgba(76,175,130,0.15); color: var(--green); }
+  .badge-amber { background: rgba(232,184,75,0.15); color: var(--accent); }
+  .badge-red { background: rgba(224,85,85,0.15); color: var(--red); }
+  .badge-blue { background: rgba(91,155,213,0.15); color: var(--blue); }
+  .badge-gray { background: rgba(255,255,255,0.07); color: var(--text2); }
+  .badge-orange { background: rgba(224,124,64,0.15); color: var(--orange); }
+
+  /* ── BUTTONS ── */
+  .btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-accent { background: var(--accent); color: #000; font-weight: 600; }
+  .btn-accent:hover { background: var(--accent2); }
+  .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--border2); }
+  .btn-danger { background: rgba(224,85,85,0.15); color: var(--red); border: 1px solid rgba(224,85,85,0.3); }
+
+  /* ── SEARCH/FILTER ── */
+  .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-input { background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 9px 14px; border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; flex: 1; min-width: 200px; }
+  .search-input:focus { border-color: var(--accent); }
+  .filter-select { background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 9px 14px; border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer; }
+  .filter-select:focus { border-color: var(--accent); }
+
+  /* ── MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .modal-field input, .modal-field select, .modal-field textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none;
+  }
+  .modal-field textarea { resize: vertical; min-height: 80px; }
+  .modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ── PROJETO CARD ── */
+  .proj-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; cursor: pointer; transition: border-color 0.2s; }
+  .proj-card:hover { border-color: var(--border2); }
+  .proj-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .proj-card-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .proj-card-meta { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .etapas-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .etapa-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; border: 1px solid var(--border); color: var(--text2); }
+  .etapa-pill.done { background: rgba(76,175,130,0.1); border-color: rgba(76,175,130,0.3); color: var(--green); }
+  .etapa-pill.progress { background: rgba(232,184,75,0.1); border-color: rgba(232,184,75,0.3); color: var(--accent); }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 60px; color: var(--text2); }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 48px; color: var(--text2); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* ── PAGINATION ── */
+  .pagination { display: flex; gap: 6px; align-items: center; margin-top: 16px; justify-content: flex-end; }
+  .page-btn { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .page-btn:hover { border-color: var(--border2); color: var(--text); }
+  .page-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .page-info { font-size: 13px; color: var(--text2); }
+
+  @media (max-width: 768px) {
+    .cards-row.cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .cards-row.cols-3 { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 16px; }
+    .topbar { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">HYZI</div>
+    <div class="login-sub">Gestão de Projetos — Hyzi Engenharia</div>
+    <div class="field">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" />
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="login-senha" placeholder="••••••" />
+    </div>
+    <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+    <div class="login-error" id="login-error">E-mail ou senha incorretos.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">HYZI</div>
+    <div class="topbar-right">
+      <span class="user-badge" id="user-nome"></span>
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="nav-tabs" id="nav-tabs"></div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<!-- MODAL LANÇAR HORAS -->
+<div class="modal-overlay" id="modal-horas">
+  <div class="modal">
+    <div class="modal-title">Lançar Horas / Fato</div>
+    <div class="modal-field">
+      <label>Projeto</label>
+      <select id="fato-projeto"></select>
+    </div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label>Tipo</label>
+        <select id="fato-tipo">
+          <option>Horas Técnicas</option>
+          <option>Entrega de Etapa</option>
+          <option>Reunião</option>
+          <option>Revisão</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Data</label>
+        <input type="date" id="fato-data" />
+      </div>
+    </div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label>Horas</label>
+        <input type="number" id="fato-horas" placeholder="0" step="0.5" min="0" />
+      </div>
+      <div class="modal-field">
+        <label>Valor (R$)</label>
+        <input type="number" id="fato-valor" placeholder="0,00" step="0.01" min="0" />
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Descrição</label>
+      <textarea id="fato-desc" placeholder="Descreva o que foi feito..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-horas')">Cancelar</button>
+      <button class="btn btn-accent" onclick="salvarFato()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL STATUS ETAPA -->
+<div class="modal-overlay" id="modal-status">
+  <div class="modal">
+    <div class="modal-title">Atualizar Status de Etapa</div>
+    <div class="modal-field">
+      <label>Projeto</label>
+      <select id="status-projeto" onchange="carregarEtapasModal()"></select>
+    </div>
+    <div class="modal-field">
+      <label>Etapa</label>
+      <select id="status-etapa"></select>
+    </div>
+    <div class="modal-field">
+      <label>Novo Status</label>
+      <select id="status-valor">
+        <option>Não Iniciado</option>
+        <option>Em andamento</option>
+        <option>Entregue a medir</option>
+        <option>Concluído</option>
+        <option>Pausado</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-status')">Cancelar</button>
+      <button class="btn btn-accent" onclick="salvarStatus()">Atualizar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIGURAÇÃO
+// ══════════════════════════════════════════════════
+const SHEETS = {
+  geral: '1MWlcTXGY4y8x52k6jBGejQfygR4gIUqLoQSEa_9hp0g',
+  tecnico: '1Npgou9881i6JIyEH4MEOsXPz2Iwjutc2fGWVub74aFQ'
+};
+
+// ══════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════
+let AUTH_TOKEN = null;
+let USUARIO_ATUAL = null;
+let CACHE = {};
+
+// ══════════════════════════════════════════════════
+// GOOGLE SHEETS API
+// ══════════════════════════════════════════════════
+async function sheetsGet(sheetId, aba) {
+  const key = sheetId + aba;
+  if (CACHE[key]) return CACHE[key];
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(aba)}`;
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + AUTH_TOKEN } });
+  const d = await r.json();
+  const rows = d.values || [];
+  CACHE[key] = rows;
+  return rows;
+}
+
+async function sheetsAppend(sheetId, aba, values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(aba)}:append?valueInputOption=USER_ENTERED`;
+  await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + AUTH_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values })
+  });
+  delete CACHE[sheetId + aba];
+}
+
+async function sheetsUpdate(sheetId, aba, range, values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(aba + '!' + range)}?valueInputOption=USER_ENTERED`;
+  await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + AUTH_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values })
+  });
+  delete CACHE[sheetId + aba];
+}
+
+function rowsToObjs(rows) {
+  if (!rows || rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map((r, i) => {
+    const obj = { _row: i + 2 };
+    headers.forEach((h, j) => obj[h ? h.trim() : j] = r[j] || '');
+    return obj;
+  });
+}
+
+// ══════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; errEl.style.display = 'block'; return; }
+
+  // Autentica via Google OAuth
+  try {
+    await iniciarOAuth(email, senha);
+  } catch(e) {
+    errEl.textContent = 'Erro ao autenticar. Verifique suas credenciais.';
+    errEl.style.display = 'block';
+  }
+}
+
+function iniciarOAuth(email, senha) {
+  return new Promise((resolve, reject) => {
+    // Armazena temporariamente para usar após OAuth
+    sessionStorage.setItem('pending_email', email);
+    sessionStorage.setItem('pending_senha', senha);
+
+    const clientId = document.getElementById('cfg-client-id') ?
+      document.getElementById('cfg-client-id').value :
+      localStorage.getItem('hyzi_client_id');
+
+    if (!clientId) {
+      mostrarConfigOAuth(email, senha);
+      return;
+    }
+
+    const redirect = window.location.origin + window.location.pathname;
+    const scope = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
+    window.location.href = url;
+  });
+}
+
+function mostrarConfigOAuth(email, senha) {
+  document.getElementById('login-screen').innerHTML = `
+    <div class="login-box">
+      <div class="login-logo">HYZI</div>
+      <div class="login-sub">Configuração inicial — informe o Client ID do Google</div>
+      <div class="field">
+        <label>Client ID OAuth</label>
+        <input type="text" id="cfg-client-id" placeholder="xxxx.apps.googleusercontent.com" style="font-size:12px" />
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:16px">
+        Encontre no Google Cloud Console → APIs e Serviços → Credenciais → Hyzi Web
+      </p>
+      <button class="btn-primary" onclick="salvarClientId('${email}','${senha}')">Continuar</button>
+    </div>`;
+}
+
+function salvarClientId(email, senha) {
+  const id = document.getElementById('cfg-client-id').value.trim();
+  if (!id) return;
+  localStorage.setItem('hyzi_client_id', id);
+  iniciarOAuth(email, senha);
+}
+
+async function verificarCallback() {
+  // Verifica se voltou do OAuth com token
+  const hash = window.location.hash;
+  if (hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.substring(1));
+    AUTH_TOKEN = params.get('access_token');
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    const email = sessionStorage.getItem('pending_email');
+    const senha = sessionStorage.getItem('pending_senha');
+    sessionStorage.removeItem('pending_email');
+    sessionStorage.removeItem('pending_senha');
+
+    await validarUsuario(email, senha);
+  }
+}
+
+async function validarUsuario(email, senha) {
+  try {
+    const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Usuarios');
+    const usuarios = rowsToObjs(rows);
+    const u = usuarios.find(u =>
+      u['E-mail'] && u['E-mail'].toLowerCase() === email.toLowerCase() &&
+      String(u['Senha']) === String(senha)
+    );
+
+    if (!u) {
+      document.getElementById('login-error').textContent = 'E-mail ou senha incorretos.';
+      document.getElementById('login-error').style.display = 'block';
+      return;
+    }
+
+    USUARIO_ATUAL = u;
+    USUARIO_ATUAL.isGestor = email.toLowerCase() === 'andreia@hyzi.com.br' ||
+                              email.toLowerCase() === 'gusizidro@gmail.com';
+
+    iniciarApp();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('login-error').textContent = 'Erro ao verificar usuário.';
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function logout() {
+  AUTH_TOKEN = null;
+  USUARIO_ATUAL = null;
+  CACHE = {};
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-senha').value = '';
+}
+
+// ══════════════════════════════════════════════════
+// APP INIT
+// ══════════════════════════════════════════════════
+function iniciarApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-nome').textContent = USUARIO_ATUAL['Nome'] || USUARIO_ATUAL['E-mail'];
+
+  const tabs = USUARIO_ATUAL.isGestor
+    ? ['Dashboard', 'Projetos', 'Propostas', 'Financeiro', 'Equipe']
+    : ['Meus Projetos', 'Lançar Horas', 'Atualizar Etapa'];
+
+  const nav = document.getElementById('nav-tabs');
+  nav.innerHTML = tabs.map((t, i) =>
+    `<div class="nav-tab ${i===0?'active':''}" onclick="mudarTab(this,'${t}')">${t}</div>`
+  ).join('');
+
+  renderTab(tabs[0]);
+}
+
+function mudarTab(el, tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  const main = document.getElementById('main-content');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+
+  const map = {
+    'Dashboard': renderDashboard,
+    'Projetos': renderProjetos,
+    'Propostas': renderPropostas,
+    'Financeiro': renderFinanceiro,
+    'Equipe': renderEquipe,
+    'Meus Projetos': renderMeusProjetos,
+    'Lançar Horas': renderLancarHoras,
+    'Atualizar Etapa': renderAtualizarEtapa,
+  };
+  if (map[tab]) map[tab]();
+}
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function fmtMoeda(v) {
+  const n = parseFloat(String(v).replace(',', '.')) || 0;
+  return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function badgeStatus(s) {
+  const st = (s || '').toLowerCase();
+  if (st.includes('conclu') || st.includes('entregue')) return `<span class="badge badge-green">${s}</span>`;
+  if (st.includes('andamento') || st.includes('iniciado') && !st.includes('não')) return `<span class="badge badge-amber">${s}</span>`;
+  if (st.includes('não inici') || st.includes('nao inici')) return `<span class="badge badge-gray">${s || 'Não iniciado'}</span>`;
+  if (st.includes('paus') || st.includes('cancel')) return `<span class="badge badge-red">${s}</span>`;
+  if (st.includes('medir')) return `<span class="badge badge-blue">${s}</span>`;
+  return `<span class="badge badge-gray">${s || '—'}</span>`;
+}
+
+function badgeProposta(s) {
+  if (s === 'Aceita') return `<span class="badge badge-green">${s}</span>`;
+  if (s === 'Pendente') return `<span class="badge badge-amber">${s}</span>`;
+  if (s === 'Rejeitada') return `<span class="badge badge-red">${s}</span>`;
+  return `<span class="badge badge-gray">${s || '—'}</span>`;
+}
+
+function paginar(arr, pg, perPg = 20) {
+  const total = Math.ceil(arr.length / perPg);
+  return { items: arr.slice((pg-1)*perPg, pg*perPg), total, pg };
+}
+
+function renderPaginacao(total, pg, onPage) {
+  if (total <= 1) return '';
+  let html = '<div class="pagination">';
+  if (pg > 1) html += `<button class="page-btn" onclick="${onPage}(${pg-1})">←</button>`;
+  for (let i = Math.max(1,pg-2); i <= Math.min(total,pg+2); i++) {
+    html += `<button class="page-btn ${i===pg?'active':''}" onclick="${onPage}(${i})">${i}</button>`;
+  }
+  if (pg < total) html += `<button class="page-btn" onclick="${onPage}(${pg+1})">→</button>`;
+  html += `<span class="page-info">Página ${pg} de ${total}</span></div>`;
+  return html;
+}
+
+// ══════════════════════════════════════════════════
+// DASHBOARD (gestor)
+// ══════════════════════════════════════════════════
+async function renderDashboard() {
+  const [rowsProj, rowsProp] = await Promise.all([
+    sheetsGet(SHEETS.geral, 'Cadastro_Projetos'),
+    sheetsGet(SHEETS.geral, 'Cadastro_Propostas')
+  ]);
+  const projetos = rowsToObjs(rowsProj).filter(p => p['EMPRESA']);
+  const propostas = rowsToObjs(rowsProp).filter(p => p['Empresa']);
+
+  const ativos = projetos.filter(p => (p['STATUS GERAL ']||'').toLowerCase().includes('andamento')).length;
+  const concluidos = projetos.filter(p => (p['STATUS GERAL ']||'').toLowerCase().includes('conclu')).length;
+  const propAceitas = propostas.filter(p => p['Status'] === 'Aceita').length;
+  const receitaTotal = propostas.filter(p => p['Status'] === 'Aceita').reduce((s, p) => s + (parseFloat(p['Valor']) || 0), 0);
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="cards-row cols-4">
+      <div class="card"><div class="card-label">Projetos ativos</div><div class="card-value amber">${ativos}</div></div>
+      <div class="card"><div class="card-label">Concluídos</div><div class="card-value green">${concluidos}</div></div>
+      <div class="card"><div class="card-label">Propostas aceitas</div><div class="card-value blue">${propAceitas}</div></div>
+      <div class="card"><div class="card-label">Receita contratada</div><div class="card-value green" style="font-size:20px">${fmtMoeda(receitaTotal)}</div></div>
+    </div>
+    <div class="cards-row cols-2">
+      <div class="card">
+        <div class="card-label">Últimos projetos</div>
+        ${projetos.slice(-5).reverse().map(p => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:14px;font-weight:500">${p['NOME OBRA'] || '—'}</div>
+              <div style="font-size:12px;color:var(--text2)">${p['EMPRESA'] || ''}</div>
+            </div>
+            ${badgeStatus(p['STATUS GERAL '])}
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-label">Últimas propostas</div>
+        ${propostas.slice(-5).reverse().map(p => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:14px;font-weight:500">${p['Nome da Obra'] || '—'}</div>
+              <div style="font-size:12px;color:var(--text2)">${p['Empresa'] || ''} · ${fmtMoeda(p['Valor'])}</div>
+            </div>
+            ${badgeProposta(p['Status'])}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// PROJETOS (gestor)
+// ══════════════════════════════════════════════════
+let _projPg = 1, _projFiltro = '', _projStatus = '';
+async function renderProjetos(pg = 1) {
+  _projPg = pg;
+  const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Projetos');
+  let projetos = rowsToObjs(rows).filter(p => p['EMPRESA']);
+
+  if (_projFiltro) {
+    const f = _projFiltro.toLowerCase();
+    projetos = projetos.filter(p =>
+      (p['NOME OBRA']||'').toLowerCase().includes(f) ||
+      (p['EMPRESA']||'').toLowerCase().includes(f) ||
+      (p['NÚMERO PROPOSTA']||'').toLowerCase().includes(f)
+    );
+  }
+  if (_projStatus) projetos = projetos.filter(p => (p['STATUS GERAL ']||'') === _projStatus);
+
+  const { items, total } = paginar(projetos, pg);
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-header">
+      <div class="section-title">Projetos <span style="color:var(--text2);font-size:14px;font-weight:400">(${projetos.length})</span></div>
+    </div>
+    <div class="filters">
+      <input class="search-input" placeholder="Buscar por obra, empresa ou proposta..." value="${_projFiltro}"
+        oninput="_projFiltro=this.value;renderProjetos(1)" />
+      <select class="filter-select" onchange="_projStatus=this.value;renderProjetos(1)">
+        <option value="">Todos os status</option>
+        <option value="Em andamento">Em andamento</option>
+        <option value="Não iniciado">Não iniciado</option>
+        <option value="Concluído">Concluído</option>
+        <option value="Pausado">Pausado</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Obra</th><th>Empresa</th><th>Coordenador</th>
+          <th>Etapas</th><th>Valor</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          ${items.map(p => {
+            const nEtapas = parseInt(p['QUANTIDADE ETAPAS']) || 0;
+            const etapas = [];
+            for (let i = 1; i <= nEtapas; i++) {
+              const s = p[`STATUS E${i}`] || '';
+              etapas.push(`<span class="etapa-pill ${s.toLowerCase().includes('conclu')||s.toLowerCase().includes('entregue')?'done':s.toLowerCase().includes('andamento')?'progress':''}">${p[`ETAPA ${i}`]||`E${i}`}</span>`);
+            }
+            return `<tr>
+              <td><div style="font-weight:500">${p['NOME OBRA']||'—'}</div><div style="font-size:11px;color:var(--text2)">${p['NÚMERO PROPOSTA']||''}</div></td>
+              <td>${p['EMPRESA']||'—'}</td>
+              <td>${p['COORDENADOR ']||'—'}</td>
+              <td><div style="display:flex;gap:4px;flex-wrap:wrap">${etapas.join('')}</div></td>
+              <td>${fmtMoeda(p['VALOR'])}</td>
+              <td>${badgeStatus(p['STATUS GERAL '])}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${renderPaginacao(total, pg, 'renderProjetos')}`;
+}
+
+// ══════════════════════════════════════════════════
+// PROPOSTAS (gestor)
+// ══════════════════════════════════════════════════
+let _propPg = 1, _propFiltro = '', _propStatus = '';
+async function renderPropostas(pg = 1) {
+  _propPg = pg;
+  const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Propostas');
+  let propostas = rowsToObjs(rows).filter(p => p['Empresa']);
+
+  if (_propFiltro) {
+    const f = _propFiltro.toLowerCase();
+    propostas = propostas.filter(p =>
+      (p['Nome da Obra']||'').toLowerCase().includes(f) ||
+      (p['Empresa']||'').toLowerCase().includes(f)
+    );
+  }
+  if (_propStatus) propostas = propostas.filter(p => p['Status'] === _propStatus);
+
+  const { items, total } = paginar(propostas, pg);
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-header">
+      <div class="section-title">Propostas <span style="color:var(--text2);font-size:14px;font-weight:400">(${propostas.length})</span></div>
+    </div>
+    <div class="filters">
+      <input class="search-input" placeholder="Buscar por obra ou empresa..." value="${_propFiltro}"
+        oninput="_propFiltro=this.value;renderPropostas(1)" />
+      <select class="filter-select" onchange="_propStatus=this.value;renderPropostas(1)">
+        <option value="">Todos os status</option>
+        <option>Aceita</option><option>Pendente</option><option>Rejeitada</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Nº Proposta</th><th>Obra</th><th>Empresa</th><th>Contato</th><th>Área (m²)</th><th>Valor</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          ${items.map(p => `<tr>
+            <td style="font-size:12px;color:var(--text2)">${p['Número da Proposta']||'—'}</td>
+            <td><div style="font-weight:500">${p['Nome da Obra']||'—'}</div></td>
+            <td>${p['Empresa']||'—'}</td>
+            <td>${p['Contato']||'—'}</td>
+            <td>${parseFloat(p['Área']||0).toLocaleString('pt-BR',{maximumFractionDigits:0})} m²</td>
+            <td>${fmtMoeda(p['Valor'])}</td>
+            <td>${badgeProposta(p['Status'])}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${renderPaginacao(total, pg, 'renderPropostas')}`;
+}
+
+// ══════════════════════════════════════════════════
+// FINANCEIRO (gestor)
+// ══════════════════════════════════════════════════
+async function renderFinanceiro() {
+  const [rowsProj, rowsProp] = await Promise.all([
+    sheetsGet(SHEETS.geral, 'Cadastro_Projetos'),
+    sheetsGet(SHEETS.geral, 'Cadastro_Propostas')
+  ]);
+  const projetos = rowsToObjs(rowsProj).filter(p => p['EMPRESA']);
+  const propostas = rowsToObjs(rowsProp).filter(p => p['Empresa']);
+
+  const receitaAceita = propostas.filter(p=>p['Status']==='Aceita').reduce((s,p)=>s+(parseFloat(p['Valor'])||0),0);
+  const receitaPend = propostas.filter(p=>p['Status']==='Pendente').reduce((s,p)=>s+(parseFloat(p['Valor'])||0),0);
+  const receitaRej = propostas.filter(p=>p['Status']==='Rejeitada').reduce((s,p)=>s+(parseFloat(p['Valor'])||0),0);
+
+  // Etapas a receber
+  const etapasAReceber = [];
+  projetos.forEach(p => {
+    for (let i = 1; i <= 6; i++) {
+      const st = p[`STATUS E${i}`] || '';
+      const val = parseFloat(p[`VALOR E${i}`]) || 0;
+      if (val > 0 && !st.toLowerCase().includes('conclu')) {
+        etapasAReceber.push({ obra: p['NOME OBRA'], etapa: p[`ETAPA ${i}`]||`E${i}`, valor: val, status: st });
+      }
+    }
+  });
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-title" style="margin-bottom:20px">Financeiro</div>
+    <div class="cards-row cols-3">
+      <div class="card"><div class="card-label">Receita contratada</div><div class="card-value green" style="font-size:22px">${fmtMoeda(receitaAceita)}</div><div class="card-sub">${propostas.filter(p=>p['Status']==='Aceita').length} propostas aceitas</div></div>
+      <div class="card"><div class="card-label">Em negociação</div><div class="card-value amber" style="font-size:22px">${fmtMoeda(receitaPend)}</div><div class="card-sub">${propostas.filter(p=>p['Status']==='Pendente').length} pendentes</div></div>
+      <div class="card"><div class="card-label">Perdido</div><div class="card-value red" style="font-size:22px">${fmtMoeda(receitaRej)}</div><div class="card-sub">${propostas.filter(p=>p['Status']==='Rejeitada').length} rejeitadas</div></div>
+    </div>
+    <div class="section-header"><div class="section-title">Etapas a receber</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Obra</th><th>Etapa</th><th>Valor</th><th>Status</th></tr></thead>
+        <tbody>
+          ${etapasAReceber.slice(0,30).map(e=>`<tr>
+            <td>${e.obra||'—'}</td>
+            <td>${e.etapa}</td>
+            <td>${fmtMoeda(e.valor)}</td>
+            <td>${badgeStatus(e.status)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// EQUIPE (gestor)
+// ══════════════════════════════════════════════════
+async function renderEquipe() {
+  const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Usuarios');
+  const usuarios = rowsToObjs(rows);
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-header"><div class="section-title">Equipe</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Entrada</th><th>Valor/hora</th></tr></thead>
+        <tbody>
+          ${usuarios.map(u=>`<tr>
+            <td><div style="font-weight:500">${u['Nome']||'—'}</div></td>
+            <td style="color:var(--text2);font-size:13px">${u['E-mail']||'—'}</td>
+            <td style="color:var(--text2);font-size:13px">${u['Telefone']||'—'}</td>
+            <td style="color:var(--text2);font-size:13px">${u['Data Entrada']||'—'}</td>
+            <td>${fmtMoeda(u['Valor Hora Técnica'])}/h</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// MEUS PROJETOS (técnico)
+// ══════════════════════════════════════════════════
+async function renderMeusProjetos() {
+  const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Projetos');
+  const todos = rowsToObjs(rows).filter(p => p['EMPRESA']);
+  const meus = todos.filter(p =>
+    (p['COORDENADOR ']||'').toLowerCase().includes((USUARIO_ATUAL['Nome']||'').split(' ')[0].toLowerCase())
+  );
+  const lista = meus.length > 0 ? meus : todos;
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-title" style="margin-bottom:16px">
+      ${meus.length > 0 ? 'Meus Projetos' : 'Todos os Projetos'}
+      <span style="color:var(--text2);font-size:14px;font-weight:400"> (${lista.length})</span>
+    </div>
+    ${lista.map(p => {
+      const nEtapas = parseInt(p['QUANTIDADE ETAPAS']) || 0;
+      const etapas = [];
+      for (let i = 1; i <= nEtapas; i++) {
+        const s = p[`STATUS E${i}`] || 'Não Iniciado';
+        const nome = p[`ETAPA ${i}`] || `Etapa ${i}`;
+        const done = s.toLowerCase().includes('conclu') || s.toLowerCase().includes('entregue');
+        const prog = s.toLowerCase().includes('andamento');
+        etapas.push(`<span class="etapa-pill ${done?'done':prog?'progress':''}" title="${s}">${nome}</span>`);
+      }
+      return `<div class="proj-card">
+        <div class="proj-card-header">
+          <div>
+            <div class="proj-card-title">${p['NOME OBRA']||'—'}</div>
+            <div class="proj-card-meta">${p['EMPRESA']||''} · ${p['NÚMERO PROPOSTA']||''}</div>
+          </div>
+          ${badgeStatus(p['STATUS GERAL '])}
+        </div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">
+          📅 Início: ${p['DATA INÍCIO']||'—'} · Prazo: ${p['DATA FIM']||'—'}
+        </div>
+        <div class="etapas-row">${etapas.join('')}</div>
+      </div>`;
+    }).join('')}`;
+}
+
+// ══════════════════════════════════════════════════
+// LANÇAR HORAS (técnico)
+// ══════════════════════════════════════════════════
+async function renderLancarHoras() {
+  const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Projetos');
+  const projetos = rowsToObjs(rows).filter(p => p['EMPRESA']);
+
+  // Preenche select do modal
+  const sel = document.getElementById('fato-projeto');
+  sel.innerHTML = projetos.map(p => `<option value="${p['ID']}">${p['NOME OBRA']} — ${p['EMPRESA']}</option>`).join('');
+
+  // Data de hoje
+  document.getElementById('fato-data').value = new Date().toISOString().split('T')[0];
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-title" style="margin-bottom:8px">Lançar Horas / Fato</div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:24px">Registre horas trabalhadas, entregas ou outros eventos em projetos.</p>
+    <div class="card" style="max-width:600px">
+      <div class="modal-field">
+        <label>Projeto</label>
+        <select id="fato-projeto2" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+          ${projetos.map(p => `<option value="${p['ID']}">${p['NOME OBRA']} — ${p['EMPRESA']}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="modal-field">
+          <label>Tipo</label>
+          <select id="fato-tipo2" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+            <option>Horas Técnicas</option><option>Entrega de Etapa</option><option>Reunião</option><option>Revisão</option><option>Outro</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label>Data</label>
+          <input type="date" id="fato-data2" value="${new Date().toISOString().split('T')[0]}"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="modal-field">
+          <label>Horas</label>
+          <input type="number" id="fato-horas2" placeholder="0" step="0.5" min="0"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" />
+        </div>
+        <div class="modal-field">
+          <label>Valor (R$)</label>
+          <input type="number" id="fato-valor2" placeholder="0,00" step="0.01" min="0"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;outline:none" />
+        </div>
+      </div>
+      <div class="modal-field">
+        <label>Descrição</label>
+        <textarea id="fato-desc2" placeholder="Descreva o que foi feito..." rows="4"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical"></textarea>
+      </div>
+      <button class="btn btn-accent" style="width:100%;justify-content:center;padding:12px" onclick="salvarFato2()">
+        Salvar Lançamento
+      </button>
+      <div id="fato-msg" style="margin-top:12px;font-size:13px;display:none"></div>
+    </div>`;
+}
+
+async function salvarFato2() {
+  const projetoId = document.getElementById('fato-projeto2').value;
+  const tipo = document.getElementById('fato-tipo2').value;
+  const data = document.getElementById('fato-data2').value;
+  const horas = document.getElementById('fato-horas2').value || '0';
+  const valor = document.getElementById('fato-valor2').value || '0';
+  const desc = document.getElementById('fato-desc2').value;
+  const msg = document.getElementById('fato-msg');
+
+  if (!desc) { msg.textContent = 'Preencha a descrição.'; msg.style.color = 'var(--red)'; msg.style.display = 'block'; return; }
+
+  msg.textContent = 'Salvando...'; msg.style.color = 'var(--text2)'; msg.style.display = 'block';
+
+  try {
+    // Encontra a linha do projeto e atualiza as colunas de fato
+    const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Projetos');
+    const projetos = rowsToObjs(rows);
+    const proj = projetos.find(p => String(p['ID']) === String(projetoId));
+
+    if (proj) {
+      const rowNum = proj._row;
+      // Colunas de fato: 43=USUARIO FATO, 44=TIPO FATO, 45=DESCRIÇÃO FATO, 46=DATA FATO, 47=VALOR FATO, 48=HORAS FATO, 49=OBRA FATO
+      await sheetsUpdate(SHEETS.geral, 'Cadastro_Projetos',
+        `AR${rowNum}:AX${rowNum}`,
+        [[USUARIO_ATUAL['Nome'], tipo, desc, data, valor, horas, proj['NOME OBRA']]]
+      );
+    }
+
+    msg.textContent = '✅ Lançamento salvo com sucesso!';
+    msg.style.color = 'var(--green)';
+    document.getElementById('fato-desc2').value = '';
+    document.getElementById('fato-horas2').value = '';
+    document.getElementById('fato-valor2').value = '';
+  } catch(e) {
+    msg.textContent = 'Erro ao salvar. Tente novamente.';
+    msg.style.color = 'var(--red)';
+    console.error(e);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ATUALIZAR ETAPA (técnico)
+// ══════════════════════════════════════════════════
+async function renderAtualizarEtapa() {
+  const rows = await sheetsGet(SHEETS.geral, 'Cadastro_Projetos');
+  const projetos = rowsToObjs(rows).filter(p => p['EMPRESA']);
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-title" style="margin-bottom:8px">Atualizar Status de Etapa</div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:24px">Atualize o andamento das etapas dos projetos.</p>
+    <div class="card" style="max-width:600px">
+      <div class="modal-field">
+        <label>Projeto</label>
+        <select id="ae-projeto" onchange="carregarEtapasInline()"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+          <option value="">Selecione um projeto...</option>
+          ${projetos.map(p => `<option value="${p['ID']}" data-row="${p._row}">${p['NOME OBRA']} — ${p['EMPRESA']}</option>`).join('')}
+        </select>
+      </div>
+      <div id="ae-etapas"></div>
+      <div id="ae-msg" style="margin-top:12px;font-size:13px;display:none"></div>
+    </div>`;
+
+  // Armazena projetos para uso posterior
+  window._projetos = projetos;
+}
+
+function carregarEtapasInline() {
+  const sel = document.getElementById('ae-projeto');
+  const id = sel.value;
+  const container = document.getElementById('ae-etapas');
+  if (!id) { container.innerHTML = ''; return; }
+
+  const proj = window._projetos.find(p => String(p['ID']) === String(id));
+  if (!proj) return;
+
+  const nEtapas = parseInt(proj['QUANTIDADE ETAPAS']) || 0;
+  let html = '';
+  for (let i = 1; i <= nEtapas; i++) {
+    const nome = proj[`ETAPA ${i}`] || `Etapa ${i}`;
+    const status = proj[`STATUS E${i}`] || 'Não Iniciado';
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:14px;font-weight:500">${nome}</div>
+        <div style="font-size:12px;color:var(--text2)">Prazo: ${proj[`PRAZO E${i}`]||'—'}</div>
+      </div>
+      <select id="ae-status-${i}" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+        <option ${status==='Não Iniciado'?'selected':''}>Não Iniciado</option>
+        <option ${status==='Em andamento'?'selected':''}>Em andamento</option>
+        <option ${status==='Entregue a medir'?'selected':''}>Entregue a medir</option>
+        <option ${status==='Concluído'?'selected':''}>Concluído</option>
+        <option ${status==='Pausado'?'selected':''}>Pausado</option>
+      </select>
+    </div>`;
+  }
+  html += `<button class="btn btn-accent" style="width:100%;justify-content:center;padding:12px;margin-top:16px" onclick="salvarEtapasInline()">
+    Salvar Alterações
+  </button>`;
+  container.innerHTML = html;
+  window._projetoAtual = proj;
+}
+
+async function salvarEtapasInline() {
+  const msg = document.getElementById('ae-msg');
+  msg.textContent = 'Salvando...'; msg.style.color = 'var(--text2)'; msg.style.display = 'block';
+
+  try {
+    const proj = window._projetoAtual;
+    const nEtapas = parseInt(proj['QUANTIDADE ETAPAS']) || 0;
+    const rowNum = proj._row;
+
+    for (let i = 1; i <= nEtapas; i++) {
+      const sel = document.getElementById(`ae-status-${i}`);
+      if (sel) {
+        // STATUS E1 = col AF (índice 31), STATUS E2 = AG (32), ...
+        const col = String.fromCharCode(65 + 31 + (i-1)); // AF, AG, AH...
+        // Para colunas > Z: AA, AB...
+        const colName = 31 + (i-1) >= 26
+          ? 'A' + String.fromCharCode(65 + (31 + (i-1) - 26))
+          : String.fromCharCode(65 + 31 + (i-1));
+        await sheetsUpdate(SHEETS.geral, 'Cadastro_Projetos',
+          `${colName}${rowNum}`, [[sel.value]]
+        );
+      }
+    }
+
+    // Limpa cache
+    delete CACHE[SHEETS.geral + 'Cadastro_Projetos'];
+
+    msg.textContent = '✅ Status atualizado com sucesso!';
+    msg.style.color = 'var(--green)';
+  } catch(e) {
+    msg.textContent = 'Erro ao salvar.';
+    msg.style.color = 'var(--red)';
+    console.error(e);
+  }
+}
+
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+window.addEventListener('load', verificarCallback);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') fazerLogin();
+});
+</script>
+</body>
+</html>
