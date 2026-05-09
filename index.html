@@ -275,15 +275,25 @@ function bPr(s){
 }
 
 // Filtro por período
+function excelToDate(v){
+  if(!v||v==='')return null;
+  const s=String(v).trim();
+  // Excel serial number (e.g. 46034)
+  if(/^\d{4,5}$/.test(s)){
+    const d=new Date((parseInt(s)-25569)*86400000);
+    return isNaN(d)?null:d;
+  }
+  // ISO string or date string
+  const d=new Date(s.includes('T')?s:s+'T12:00:00');
+  return isNaN(d)?null:d;
+}
 function filtroPeriodo(data, meses){
   if(!meses||meses==='all')return true;
-  if(!data||data==='')return false;
-  try{
-    const d=new Date(String(data).split('T')[0]+'T12:00:00');
-    const limite=new Date();
-    limite.setMonth(limite.getMonth()-parseInt(meses));
-    return d>=limite;
-  }catch{return false}
+  const d=excelToDate(data);
+  if(!d)return false;
+  const limite=new Date();
+  limite.setMonth(limite.getMonth()-parseInt(meses));
+  return d>=limite;
 }
 
 // ── SHEETS API ──
@@ -363,8 +373,8 @@ function initApp(){
   buildSb();nav(USR.isMaster?'dash':'mproj');
 }
 function buildSb(){
-  const m=`<div class="ss">Principal</div><div class="ni" onclick="nav('dash',this)"><span class="ni-ic">◈</span>Dashboard</div><div class="ss">Gestão</div><div class="ni" onclick="nav('proj',this)"><span class="ni-ic">◉</span>Projetos</div><div class="ni" onclick="nav('prop',this)"><span class="ni-ic">◎</span>Propostas</div><div class="ni" onclick="nav('emp',this)"><span class="ni-ic">◇</span>Empresas</div><div class="ss">Financeiro</div><div class="ni" onclick="nav('fin',this)"><span class="ni-ic">◈</span>Financeiro</div><div class="ss">Admin</div><div class="ni" onclick="nav('eq',this)"><span class="ni-ic">◉</span>Equipe</div>`;
-  const t=`<div class="ss">Projetos</div><div class="ni" onclick="nav('mproj',this)"><span class="ni-ic">◉</span>Meus Projetos</div><div class="ss">Lançamentos</div><div class="ni" onclick="nav('lh',this)"><span class="ni-ic">◎</span>Lançar Horas</div><div class="ni" onclick="nav('ae',this)"><span class="ni-ic">◇</span>Etapas</div><div class="ni" onclick="nav('fr',this)"><span class="ni-ic">◈</span>Fato Relevante</div>`;
+  const m=`<div class="ss">Principal</div><div class="ni" onclick="nav('dash',this)"><span class="ni-ic">◈</span>Dashboard</div><div class="ss">Gestão</div><div class="ni" onclick="nav('proj',this)"><span class="ni-ic">◉</span>Projetos</div><div class="ni" onclick="nav('prop',this)"><span class="ni-ic">◎</span>Propostas</div><div class="ni" onclick="nav('emp',this)"><span class="ni-ic">◇</span>Empresas</div><div class="ni" onclick="nav('hist',this)"><span class="ni-ic">📋</span>Histórico</div><div class="ss">Financeiro</div><div class="ni" onclick="nav('fin',this)"><span class="ni-ic">◈</span>Financeiro</div><div class="ss">Admin</div><div class="ni" onclick="nav('eq',this)"><span class="ni-ic">◉</span>Equipe</div>`;
+  const t=`<div class="ss">Projetos</div><div class="ni" onclick="nav('mproj',this)"><span class="ni-ic">◉</span>Meus Projetos</div><div class="ni" onclick="nav('hist',this)"><span class="ni-ic">📋</span>Histórico</div><div class="ss">Lançamentos</div><div class="ni" onclick="nav('lh',this)"><span class="ni-ic">◎</span>Lançar Horas</div><div class="ni" onclick="nav('ae',this)"><span class="ni-ic">◇</span>Etapas</div><div class="ni" onclick="nav('fr',this)"><span class="ni-ic">◈</span>Fato Relevante</div>`;
   document.getElementById('sb').innerHTML=USR.isMaster?m:t;
 }
 function nav(pg,el){
@@ -691,6 +701,8 @@ async prop(p=1){
   if(cli)l=l.filter(x=>(x['Empresa']||'')===cli);
   if(vmin>0)l=l.filter(x=>(parseFloat(x['Valor'])||0)>=vmin);
   if(vmax>0)l=l.filter(x=>(parseFloat(x['Valor'])||0)<=vmax);
+  const pper=_pg.ppper||'all';
+  if(pper!=='all')l=l.filter(x=>filtroPeriodo(x['Data']||x['DATA INÍCIO'],pper));
   const{items,total}=pg(l,p);
   const empOpts=emps.map(e=>`<option value="${e['Cliente']}" ${cli===e['Cliente']?'selected':''}>${e['Cliente']}</option>`).join('');
   setM(`
@@ -701,9 +713,10 @@ async prop(p=1){
       <select class="flt" onchange="_pg.ppcli=this.value;PGS.prop(1)"><option value="">Todos clientes</option>${empOpts}</select>
       <input class="flt srch" type="number" placeholder="Valor mín R$" style="width:110px" value="${_pg.ppvmin||''}" oninput="_pg.ppvmin=this.value;PGS.prop(1)">
       <input class="flt srch" type="number" placeholder="Valor máx R$" style="width:110px" value="${_pg.ppvmax||''}" oninput="_pg.ppvmax=this.value;PGS.prop(1)">
+      <select class="flt" onchange="_pg.ppper=this.value;PGS.prop(1)"><option value="all" ${(_pg.ppper||'all')==='all'?'selected':''}>Todo período</option><option value="3" ${_pg.ppper==='3'?'selected':''}>Últ. 3 meses</option><option value="6" ${_pg.ppper==='6'?'selected':''}>Últ. 6 meses</option><option value="12" ${_pg.ppper==='12'?'selected':''}>Últ. 1 ano</option></select>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>Nº Proposta</th><th>Obra</th><th>Empresa</th><th>Contato</th><th>Área m²</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+      <thead><tr><th>Nº Proposta</th><th>Obra</th><th>Empresa</th><th>Contato</th><th>Área m²</th><th>Valor</th><th>Data</th><th>Status</th><th>Ações</th></tr></thead>
       <tbody>${items.map(x=>`<tr>
         <td style="font-size:10px;color:var(--tx2)">${x['Número da Proposta']||'—'}</td>
         <td style="font-weight:600;font-size:13px">${x['Nome da Obra']||'—'}</td>
@@ -711,6 +724,7 @@ async prop(p=1){
         <td style="font-size:12px">${x['Contato']||'—'}</td>
         <td style="font-size:12px">${parseFloat(x['Área']||0).toLocaleString('pt-BR',{maximumFractionDigits:0})}</td>
         <td style="font-weight:600;font-size:13px">${fR(x['Valor'])}</td>
+        <td style="font-size:12px;color:var(--tx2)">${fD(x['Data']||x['DATA INÍCIO']||'')}</td>
         <td>${bPr(x['Status'])}</td>
         <td><div style="display:flex;gap:4px">
           <button class="btn bsm bgh" onclick='editPropData(${x._row})'>Editar</button>
@@ -751,7 +765,10 @@ async fin(){
 
   let prop=allProp;
   let proj=allProj;
-  if(per!=='all'){prop=prop.filter(p=>filtroPeriodo(p['DATA FATO']||p['DATA INÍCIO'],per))}
+  if(per!=='all'){
+    prop=prop.filter(p=>filtroPeriodo(p['Data']||p['DATA INÍCIO']||p['DATA FATO'],per));
+    proj=proj.filter(p=>filtroPeriodo(p['DATA INÍCIO'],per));
+  }
   if(stF)prop=prop.filter(p=>p['Status']===stF);
 
   const rAceita=prop.filter(p=>p['Status']==='Aceita').reduce((s,p)=>s+(parseFloat(p['Valor'])||0),0);
@@ -935,6 +952,135 @@ async fr(){
     </div>`);
 }
 };
+
+
+// ── HISTÓRICO DO PROJETO ──────────────────────────────
+async hist(){
+  setM('<div class="loading"><div class="spin"></div>Carregando...</div>');
+  const rows=await sGet(SH.g,'Cadastro_Projetos');
+  const proj=r2o(rows).filter(p=>p['EMPRESA']);
+  const nm=(USR['Nome']||'').split(' ')[0].toLowerCase();
+  const meus=USR.isMaster?proj:proj.filter(p=>(p['COORDENADOR ']||'').toLowerCase().includes(nm));
+  const lista=meus.length?meus:proj;
+  const sel=_pg.histProj||'';
+  const opts='<option value="">— Selecione um projeto —</option>'+lista.map(p=>`<option value="${p['ID']}" ${sel===String(p['ID'])?'selected':''}>${p['NOME OBRA']} — ${p['EMPRESA']}</option>`).join('');
+
+  let detalhe='<div style="text-align:center;padding:40px;color:var(--tx2)">Selecione um projeto para ver o histórico completo.</div>';
+
+  if(sel){
+    const p=lista.find(x=>String(x['ID'])===sel);
+    if(p){
+      const ne=parseInt(p['QUANTIDADE ETAPAS'])||0;
+      const st=p['STATUS GERAL']||p['STATUS GERAL ']||'';
+
+      // Etapas
+      let etapasHtml='';
+      for(let i=1;i<=ne;i++){
+        const enm=p[`ETAPA ${i}`]||`Etapa ${i}`;
+        const est=p[`STATUS E${i}`]||'Não Iniciado';
+        const epr=p[`PRAZO E${i}`]||'—';
+        const ede=p[`DESCRIÇÃO E${i}`]||'';
+        const ev=USR.isMaster?(parseFloat(p[`VALOR E${i}`])||0):null;
+        const estDone=(est.toLowerCase().includes('conclu')||est.toLowerCase().includes('entregue'));
+        const estProg=est.toLowerCase().includes('andamento');
+        const estMedir=est.toLowerCase().includes('medir');
+        etapasHtml+=`
+          <div style="display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--bo)">
+            <div style="width:28px;height:28px;border-radius:50%;background:${estDone?'var(--vd)':estProg?'var(--az)':estMedir?'var(--amb)':'var(--bg4)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${estDone?'#000':'#fff'};flex-shrink:0;margin-top:2px">${i}</div>
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                  <div style="font-size:13px;font-weight:600">${enm}</div>
+                  <div style="font-size:11px;color:var(--tx2);margin-top:2px">Prazo: ${epr}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  ${USR.isMaster&&ev?`<span style="font-size:12px;font-weight:600;color:var(--az)">${fR(ev)}</span>`:''}
+                  ${bSt(est)}
+                </div>
+              </div>
+              ${ede?`<div style="font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.5;background:var(--bg3);padding:8px;border-radius:6px">${ede}</div>`:''}
+              ${estMedir?`<div style="font-size:11px;color:var(--amb);margin-top:4px;font-weight:600">⏳ Aguardando medição/aprovação</div>`:''}
+            </div>
+          </div>`;
+      }
+
+      // Fato e lançamentos
+      const fato=p['DESCRIÇÃO FATO']||'';
+      const fatoTipo=p['TIPO FATO']||'';
+      const fatoData=p['DATA FATO']||'';
+      const fatoUser=p['USUARIO FATO']||'';
+      const fatoHoras=p['HORAS FATO']||'';
+      const fatoValor=p['VALOR FATO']||'';
+
+      // Info financeira (só master)
+      const finHtml=USR.isMaster?`
+        <div style="margin-top:20px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--az);font-weight:700;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid var(--azl)">Financeiro</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+            <div class="sc" style="--accent:var(--az)"><div class="sl">Valor total</div><div class="sv az" style="font-size:18px">${fR(p['VALOR'])}</div></div>
+            <div class="sc" style="--accent:var(--vd)"><div class="sl">Forma pgto</div><div style="font-size:13px;font-weight:500;margin-top:4px">${p['FORMA PAGTO']||'—'}</div></div>
+            <div class="sc" style="--accent:var(--amb)"><div class="sl">Horas lançadas</div><div class="sv amb" style="font-size:18px">${fatoHoras||'0'}h</div></div>
+          </div>
+        </div>`:'';
+
+      // Fato relevante
+      const fatoHtml=fato?`
+        <div style="margin-top:20px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--az);font-weight:700;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid var(--azl)">Último Fato Relevante</div>
+          <div style="background:var(--bg3);border:1px solid var(--bo);border-radius:var(--r);padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+              <div>
+                <span class="badge bam">${fatoTipo||'Fato'}</span>
+                <span style="font-size:11px;color:var(--tx2);margin-left:8px">${fatoUser} · ${fD(fatoData)}</span>
+              </div>
+              ${USR.isMaster&&fatoValor&&fatoValor!=='0'?`<span style="font-size:12px;font-weight:600;color:var(--az)">${fR(fatoValor)}</span>`:''}
+            </div>
+            <div style="font-size:13px;line-height:1.6">${fato}</div>
+            ${USR.isMaster&&fatoHoras&&fatoHoras!=='0'?`<div style="font-size:11px;color:var(--tx2);margin-top:6px">⏱ ${fatoHoras} horas lançadas</div>`:''}
+          </div>
+        </div>`:'<div style="margin-top:20px;font-size:13px;color:var(--tx2)">Nenhum fato relevante registrado ainda.</div>';
+
+      detalhe=`
+        <!-- CABEÇALHO DO PROJETO -->
+        <div style="background:var(--bg2);border:1px solid var(--bo);border-radius:var(--r);padding:20px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+            <div>
+              <div style="font-size:20px;font-weight:700">${p['NOME OBRA']||'—'}</div>
+              <div style="font-size:13px;color:var(--tx2);margin-top:4px">${p['EMPRESA']||''} · ${p['NÚMERO PROPOSTA']||''}</div>
+            </div>
+            ${bSt(st)}
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px">
+            <div><span style="color:var(--tx2)">Coordenador Hyzi:</span><br><strong>${p['COORDENADOR ']||'—'}</strong></div>
+            <div><span style="color:var(--tx2)">Coord. Cliente:</span><br><strong>${p['COORDEADOR CLIENTE']||'—'}</strong></div>
+            <div><span style="color:var(--tx2)">Período:</span><br><strong>${fD(p['DATA INÍCIO'])} → ${fD(p['DATA FIM'])}</strong></div>
+          </div>
+          ${p['DESCRIÇÃO']?`<div style="margin-top:12px;font-size:12px;color:var(--tx2);line-height:1.6;background:var(--bg3);padding:10px;border-radius:6px">${p['DESCRIÇÃO']}</div>`:''}
+        </div>
+
+        <!-- FINANCEIRO (master only) -->
+        ${finHtml}
+
+        <!-- ETAPAS -->
+        <div style="background:var(--bg2);border:1px solid var(--bo);border-radius:var(--r);padding:20px;margin-bottom:16px">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--az);font-weight:700;margin-bottom:4px;padding-bottom:5px;border-bottom:1px solid var(--azl)">Etapas (${ne})</div>
+          ${etapasHtml||'<div style="color:var(--tx2);font-size:13px;padding:12px 0">Nenhuma etapa cadastrada.</div>'}
+        </div>
+
+        <!-- FATO RELEVANTE -->
+        <div style="background:var(--bg2);border:1px solid var(--bo);border-radius:var(--r);padding:20px">
+          ${fatoHtml}
+        </div>`;
+    }
+  }
+
+  setM(`
+    <div class="ph"><div class="pt">Histórico do Projeto</div></div>
+    <div class="fbar">
+      <select class="flt" style="flex:1;max-width:500px" onchange="_pg.histProj=this.value;PGS.hist()">${opts}</select>
+    </div>
+    ${detalhe}`);
+},
 
 // Ajuste nav para técnico ver dashboard
 const _origNav=nav;
